@@ -25,15 +25,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import test_connection, SessionLocal
+from app.database import test_connection, SessionLocal, Base, engine
 from app.models import Dietitian
 from app.auth import router as auth_router, hash_password
-
-# TODO: uncomment as each router gets built (same pattern as auth_router).
-# from app.routers.patients import router as patients_router
-# from app.routers.menus import router as menus_router
-# from app.routers.recommendations import router as recommendations_router
-# from app.routers.dashboard import router as dashboard_router
 
 BCRYPT_PREFIXES = ("$2b$", "$2a$", "$2y$")
 
@@ -57,6 +51,10 @@ def _fix_unhashed_dietitian_passwords() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Create all tables on startup
+    Base.metadata.create_all(bind=engine)
+    print("[startup] Database tables created")
+    
     _fix_unhashed_dietitian_passwords()
     yield
 
